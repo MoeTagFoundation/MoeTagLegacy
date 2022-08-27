@@ -1,0 +1,25 @@
+# User-specific files
+*.suo
+*.user
+*.sln.docstates
+
+# Build results
+[Dd]ebug/*
+!src/[Dd]ebug
+
+[Rr]elease/
+x64/
+[Bb]in/
+[Oo]bj/
+
+# MSTest test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# Mac desktop service store files
+.DS_Store
+
+# Visual Studio profiler
+*.psess
+*.vsp
+*.vspx
