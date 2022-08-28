@@ -24,11 +24,22 @@ namespace MoeTag.Network
 
             XDocument results = XDocument.Parse(response);
             if (results != null)
-            { 
-                IEnumerable<XElement> tokens = results.Elements("posts");
-
-                if (tokens.Count() > 0)
+            {
+                XElement? element = results.Element("posts");
+                if(element == null)
                 {
+                    MoeLogger.Log(this, "error: no element posts found in safebooru");
+                    return null;
+                }
+                IEnumerable<XElement> tokens = element.Elements();
+                if(tokens == null)
+                {
+                    MoeLogger.Log(this, "error: no elements in post found in safebooru");
+                    return null;
+                }
+                if (tokens.Any())
+                {
+                    MoeLogger.Log(this, tokens.First().Value + ", " + tokens.First().Name);
                     foreach (XElement token in tokens)
                     {
                         if (token.Attribute("preview_url") != null && token.Attribute("file_url") != null)

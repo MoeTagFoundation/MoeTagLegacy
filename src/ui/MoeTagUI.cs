@@ -662,13 +662,17 @@ namespace MoeTag.UI
 
         internal void SaveData()
         {
+            if(_moeSaveData == null)
+            {
+                MoeLogger.Log(this, "error: no savedata object");
+                return;
+            }
+
             _moeSaveData.SetProperty("DanbooruLogin", APILoginStorage.DanbooruAPILogin);
             _moeSaveData.SetProperty("DanbooruKey", APILoginStorage.DanbooruAPIKey);
             string json = JsonConvert.SerializeObject(_moeSaveData);
-            using (StreamWriter stream = new StreamWriter(File.Create("moesavedata.json")))
-            {
-                stream.Write(json);
-            }
+            using StreamWriter stream = new(File.Create("moesavedata.json"));
+            stream.Write(json);
         }
 
         private async void Search(bool resetPage = true)
@@ -680,13 +684,6 @@ namespace MoeTag.UI
 
             _searchState = SearchState.PREPARING;
             _moeContentManager!.DisposeUnusedContent();
-
-            void errorExit(string error)
-            {
-                Console.Error.WriteLine(error);
-                _searchState = SearchState.NO_RESULTS;
-            }
-
             _searchState = SearchState.API_FETCHING;
 
             int totalResults = 0;
@@ -749,7 +746,7 @@ namespace MoeTag.UI
             }
         }
 
-        private bool DrawTexture(MoeTexture texture, Vector2 fitSize, bool button = false, bool center = true)
+        private static bool DrawTexture(MoeTexture texture, Vector2 fitSize, bool button = false, bool center = true)
         {
             Vector2 currentSize = texture.Size;
             Vector2 scaledSize = texture.Size;
@@ -770,8 +767,7 @@ namespace MoeTag.UI
                 ImGui.SetCursorPos(previousPosition + ((fitSize - scaledSize) * 0.5f));
             }
 
-            bool pressed = false;
-
+            bool pressed;
             // Render
             if (button)
             {
@@ -909,7 +905,6 @@ namespace MoeTag.UI
             // Suppress Finalizer
             GC.SuppressFinalize(this);
         }
-
 
     }
 }

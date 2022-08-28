@@ -77,9 +77,9 @@ namespace MoeTag.Graphics
 
             ApplyDataBuffer();
 
-            GL.TextureParameter(GLTexture, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            GL.TextureParameter(GLTexture, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Filter4Sgis);
             Util.CheckGLError("MagFilter");
-            GL.TextureParameter(GLTexture, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.TextureParameter(GLTexture, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Filter4Sgis);
             Util.CheckGLError("MinFilter");
         }
 

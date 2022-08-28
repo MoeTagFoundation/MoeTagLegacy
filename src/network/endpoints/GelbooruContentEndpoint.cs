@@ -33,7 +33,7 @@ namespace MoeTag.Network
             if (results["post"] == null) { return null; }
 
             IEnumerable<JToken> tokens = results["post"].Children();
-            if (tokens.Count() > 0)
+            if (tokens.Any())
             {
                 ICollection<Task> tasks = new List<Task>();
                 foreach (JToken token in tokens)

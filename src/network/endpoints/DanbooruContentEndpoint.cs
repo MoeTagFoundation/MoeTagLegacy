@@ -28,7 +28,7 @@ namespace MoeTag.Network
             if (results == null) { return null; }
 
             IReadOnlyCollection<JToken> tokens = results.ToList();
-            if (tokens.Count > 0)
+            if (tokens.Any())
             {
                 foreach (JToken token in tokens)
                 {
