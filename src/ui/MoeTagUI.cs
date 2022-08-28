@@ -141,7 +141,7 @@ namespace MoeTag.UI
             {
                 ImGui.BeginDisabled();
             }
-            if (ImGui.Button(_moeLanguageProvider.GetLanguageNode(LanguageNodeType.PAGE_LABEL, "" + Math.Max(0, (_page - 1))), new Vector2(width / 2.0f, 30)))
+            if (ImGui.Button(_moeLanguageProvider.GetLanguageNode(LanguageNodeType.PAGE_LABEL, "<<<"), new Vector2((width / 2.0f) - 50, 30)))
             {
                 _page -= 1;
                 _page = Math.Max(_page, 0);
@@ -158,7 +158,12 @@ namespace MoeTag.UI
             }
             ImGui.SameLine();
 
-            if (ImGui.Button(_moeLanguageProvider.GetLanguageNode(LanguageNodeType.PAGE_LABEL, "" + (_page + 1)), new Vector2(width / 2.0f, 30)))
+            ImGui.BeginDisabled();
+            ImGui.Button("Page " + _page, new Vector2(100, 30));
+            ImGui.EndDisabled();
+
+            ImGui.SameLine();
+            if (ImGui.Button(_moeLanguageProvider.GetLanguageNode(LanguageNodeType.PAGE_LABEL, ">>>"), new Vector2((width / 2.0f) - 50, 30)))
             {
                 _page += 1;
                 Search(resetPage: false);
@@ -203,15 +208,163 @@ namespace MoeTag.UI
             ImGui.Separator();
         }
 
+
+        bool[] enabledMenus = new bool[2] { false, false };
+        bool enabledMenuBar = true;
+
         public void DrawUI(OpenTK.Mathematics.Vector2i clientSize)
         {
             unsafe
             {
                 ImGui.DockSpaceOverViewport(ImGui.GetMainViewport(), ImGuiDockNodeFlags.PassthruCentralNode);
             }
+
             bool drawUI = true;
+            int menuState = 0;
             if (drawUI)
             {
+                if (enabledMenuBar)
+                {
+                    if (ImGui.BeginMainMenuBar())
+                    {
+                        if (ImGui.BeginMenu("Help"))
+                        {
+                            if (ImGui.MenuItem("About MoeTag", "a"))
+                            {
+                                menuState = 1;
+                            }
+                            if (ImGui.MenuItem("About System", "s"))
+                            {
+                                menuState = 2;
+                            }
+                            ImGui.EndMenu();
+                        }
+                        if (ImGui.BeginMenu("Configure"))
+                        {
+                            if (ImGui.MenuItem("Settings", "s"))
+                            {
+                                menuState = 3;
+                            }
+                            ImGui.EndMenu();
+                        }
+                        if (ImGui.MenuItem("Hide Bar", "h"))
+                        {
+                            enabledMenuBar = false;
+                        }
+
+                        ImGui.EndMainMenuBar();
+                    }
+                }
+
+                if(menuState == 1)
+                {
+                    ImGui.OpenPopup("About MoeTag");
+                }
+                else if (menuState == 2)
+                {
+                    ImGui.OpenPopup("About System");
+                }
+                else if (menuState == 3)
+                {
+                    ImGui.OpenPopup("Settings");
+                }
+
+                unsafe
+                {
+                    if (ImGui.BeginPopupModal("About MoeTag"))
+                    {
+                        ImGui.Text("MoeTag by MoeTagFoundation | 2022");
+                        ImGui.BulletText("Version: " + MoeApplication.V_MAJOR + "." + MoeApplication.V_MINOR + "." + MoeApplication.V_PATCH + " (ALPHA Software)");
+
+                        ImGui.TextWrapped("Thank you for the use of 'MoeTag', this Media Management Software has been provided Free of Charge. If you have paid for this software, then you have unrightfully been charged.");
+
+                        ImGui.Separator();
+
+                        ImGui.TextWrapped("Current Platforms of Support:");
+                        ImGui.BulletText("Windows (x64) : (Windows 10)");
+                        ImGui.BulletText("Linux (x64) : (Arch Linux 5.15+)");
+                        ImGui.TextWrapped("Privacy Agreement: We do not collect any data(s) from the download or use of this application as a first-party. External APIs/Endpoints may log interaction data such as IP Address and date. VPN Services may provide support around this.");
+
+                        ImGui.Separator();
+
+                        ImGui.TextWrapped("THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.");
+
+                        ImGui.TextWrapped("Software Support, Software Updates and Contact is only provided on the following sources:");
+                        ImGui.BulletText("https://figmen.itch.io/moetag");
+                        ImGui.BulletText("https://github.com/moetagfoundation/moetag");
+
+                        if (ImGui.Button("Close Screen", new Vector2(0, 0)))
+                        {
+                            ImGui.CloseCurrentPopup();
+                        }
+                        ImGui.EndPopup();
+                    }
+
+                    if (ImGui.BeginPopupModal("About System"))
+                    {
+                        ImGui.Text("OpenGL Version: " + GL.GetString(StringName.Version));
+                        ImGui.Text("GPU: " + GL.GetString(StringName.Renderer));
+                        ImGui.Text("OS: " + RuntimeInformation.OSDescription);
+                        ImGui.Text("Arch: " + RuntimeInformation.ProcessArchitecture);
+
+                        var memory = 0.0;
+                        using (Process proc = Process.GetCurrentProcess())
+                        {
+                            // The proc.PrivateMemorySize64 will returns the private memory usage in byte.
+                            // Would like to Convert it to Megabyte? divide it by 2^20
+                            memory = proc.PrivateMemorySize64 / (1024 * 1024);
+                        }
+                        ImGui.Text("PrivateMemorySize64: " + memory + "MB");
+                        unsafe { ImGui.Text("IM Framerate: " + (int)Math.Round(ImGui.GetIO()->Framerate)); }
+
+                        if (ImGui.Button("Close Screen", new Vector2(0, 0)))
+                        {
+                            ImGui.CloseCurrentPopup();
+                        }
+                    }
+                    if (ImGui.BeginPopupModal("Settings"))
+                    {
+                        unsafe
+                        {
+                            ImGui.Separator();
+                            ImGui.Text("General Settings");
+                            ImGui.Separator();
+
+                            int temp = _columnSize;
+                            ImGui.SliderInt("Column Size", &temp, 10, 500, "%dpx");
+                            _columnSize = temp;
+
+                            fixed (int* imageUpdateRatePtr = &_imageUpdateRate)
+                            {
+                                ImGui.SliderInt("Image Update Rate", imageUpdateRatePtr, 200, 5000, "Every %dms");
+                            }
+
+                            ImGui.Separator();
+                            ImGui.Text("Danbooru API Settings");
+                            ImGui.Separator();
+
+                            fixed (byte* danbooruApiPtr = MoeUnmanagedHelper.GetRawBuffer("DanbooruKey"))
+                            {
+                                ImGui.InputTextWithHint("Danbooru API Key", "e.g. qwVcCmaPT3mgFuUXsRLej7Kk", danbooruApiPtr, 128);
+                            }
+                            APILoginStorage.DanbooruAPIKey = MoeUnmanagedHelper.GetUnmanagedString("DanbooruKey");
+
+
+                            fixed (byte* danbooruApiLogin = MoeUnmanagedHelper.GetRawBuffer("DanbooruLogin"))
+                            {
+                                ImGui.InputTextWithHint("Danbooru API Login", "e.g. username", danbooruApiLogin, 128);
+                            }
+                            APILoginStorage.DanbooruAPILogin = MoeUnmanagedHelper.GetUnmanagedString("DanbooruLogin");
+                        }
+
+                        if (ImGui.Button("Close Screen", new Vector2(0, 0)))
+                        {
+                            ImGui.CloseCurrentPopup();
+                        }
+                    }
+                }
+
+
                 unsafe
                 {
                     ImGui.Begin(_moeLanguageProvider.GetLanguageNode(LanguageNodeType.SECTION_SEARCHSETTINGS));
@@ -221,55 +374,7 @@ namespace MoeTag.UI
 
                 DrawSearchUI();
 
-                if (ImGui.CollapsingHeader(_moeLanguageProvider.GetLanguageNode(LanguageNodeType.HEADER_SYSTEMINFO)))
-                {
-                    //ImGui.Text("FPS: " + Math.Round(1f / e.Time));
-                    ImGui.Text("OpenGL Version: " + GL.GetString(StringName.Version));
-                    ImGui.Text("GPU: " + GL.GetString(StringName.Renderer));
-                    ImGui.Text("OS: " + RuntimeInformation.OSDescription);
-                    ImGui.Text("Arch: " + RuntimeInformation.ProcessArchitecture);
-
-                    var memory = 0.0;
-                    using (Process proc = Process.GetCurrentProcess())
-                    {
-                        // The proc.PrivateMemorySize64 will returns the private memory usage in byte.
-                        // Would like to Convert it to Megabyte? divide it by 2^20
-                        memory = proc.PrivateMemorySize64 / (1024 * 1024);
-                    }
-                    ImGui.Text("PrivateMemorySize64: " + memory + "MB");
-                    unsafe { ImGui.Text("IM Framerate: " + (int)Math.Round(ImGui.GetIO()->Framerate)); }
-                }
-
                 ImGui.Separator();
-
-                if (ImGui.CollapsingHeader(_moeLanguageProvider.GetLanguageNode(LanguageNodeType.HEADER_SETTINGS)))
-                {
-                    unsafe
-                    {
-                        int temp = _columnSize;
-                        ImGui.SliderInt("Column Size", &temp, 10, 500, "%dpx");
-                        _columnSize = temp;
-
-                        fixed (int* imageUpdateRatePtr = &_imageUpdateRate)
-                        {
-                            ImGui.SliderInt("Image Update Rate", imageUpdateRatePtr, 200, 5000, "Every %dms");
-                        }
-
-                        fixed (byte* danbooruApiPtr = MoeUnmanagedHelper.GetRawBuffer("DanbooruKey"))
-                        {
-                            ImGui.InputText("Danbooru API Key", danbooruApiPtr, 128);
-                        }
-                        APILoginStorage.DanbooruAPIKey = MoeUnmanagedHelper.GetUnmanagedString("DanbooruKey");
-
-
-                        fixed (byte* danbooruApiLogin = MoeUnmanagedHelper.GetRawBuffer("DanbooruLogin"))
-                        {
-                            ImGui.InputText("Danbooru API Login", danbooruApiLogin, 128);
-                        }
-                        APILoginStorage.DanbooruAPILogin = MoeUnmanagedHelper.GetUnmanagedString("DanbooruLogin");
-                    }
-                }
-
 
                 ImGui.End();
 

@@ -1,4 +1,5 @@
 ﻿
+using MoeTag.Debug;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -22,9 +23,8 @@ namespace MoeTag.Network
             ICollection<NetworkResponseNode> networkResponseNodes = new List<NetworkResponseNode>();
 
             XDocument results = XDocument.Parse(response);
-            XNode? tokensRaw = results.Element("posts");
-            if (tokensRaw != null)
-            {
+            if (results != null)
+            { 
                 IEnumerable<XElement> tokens = results.Elements("posts");
 
                 if (tokens.Count() > 0)

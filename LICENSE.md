@@ -1,5 +1,5 @@
 MoeTag - Browse, View and Tag Media Effortlessly
-Copyright (C) 2022  Elliot - MoeTagFoundation
+Copyright (C) 2022	MoeTagFoundation
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

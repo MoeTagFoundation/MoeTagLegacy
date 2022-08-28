@@ -14,7 +14,7 @@ namespace MoeTag.Debug
 
     public static class MoeLogger
     {
-        public static LogType LogLevel = LogType.ERROR;
+        public static LogType LogLevel = LogType.LOG;
 
         public static void Log(string source, string message, LogType type = LogType.LOG)
         {

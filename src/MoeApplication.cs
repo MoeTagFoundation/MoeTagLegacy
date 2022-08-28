@@ -6,6 +6,7 @@
 // Things that are quirks of using Biohazrd and could stand to be improved are marked with `BIOQUIRK`
 using Mochi.DearImGui;
 using Mochi.DearImGui.OpenTK;
+using MoeTag.Debug;
 using MoeTag.UI;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
@@ -16,11 +17,8 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.Numerics;
-
-const uint V_MAJOR = 0;
-const uint V_MINOR = 1;
-const uint V_PATCH = 2;
 
 // Start in the app's base directory to avoid polluting imgui.ini and to make fonts accessible
 Environment.CurrentDirectory = AppContext.BaseDirectory;
@@ -29,7 +27,7 @@ Environment.CurrentDirectory = AppContext.BaseDirectory;
 NativeWindowSettings nativeWindowSettings = new()
 {
     Size = new(1280, 720),
-    Title = "MoeTag " + V_MAJOR + "." + V_MINOR + "." + V_PATCH,
+    Title = "MoeTag " + MoeApplication.V_MAJOR + "." + MoeApplication.V_MINOR + "." + MoeApplication.V_PATCH,
 };
 
 static WindowIcon CreateWindowIcon()
@@ -83,6 +81,10 @@ window.Run();
 
 internal unsafe sealed class MoeApplication : NativeWindow
 {
+    public static uint V_MAJOR = 0;
+    public static uint V_MINOR = 1;
+    public static uint V_PATCH = 2;
+
     private readonly string? GlslVersion;
     private readonly RendererBackend RendererBackend;
     private readonly PlatformBackend PlatformBackend;
@@ -98,6 +100,11 @@ internal unsafe sealed class MoeApplication : NativeWindow
     public MoeApplication(NativeWindowSettings nativeWindowSettings, string? glslVersion)
         : base(nativeWindowSettings)
     {
+        // Operation NUKE ALL CULTURE
+        Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+        Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
+        CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+
         GlslVersion = glslVersion;
         Context.MakeCurrent();
         VSync = VSyncMode.Off; // Enable vsync
@@ -143,13 +150,8 @@ internal unsafe sealed class MoeApplication : NativeWindow
         // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
         // - Read 'docs/FONTS.md' for more instructions and details.
         // - Remember that in C# if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-        //io->Fonts->AddFontDefault();
-        //io->Fonts->AddFontFromFileTTF("fonts/Roboto-Medium.ttf", 16f);
-        //io->Fonts->AddFontFromFileTTF("fonts/Cousine-Regular.ttf", 15.0f);
-        //io->Fonts->AddFontFromFileTTF("fonts/DroidSans.ttf", 16.0f);
-        //io->Fonts->AddFontFromFileTTF("fonts/ProggyTiny.ttf", 10.0f);
 
-        ImFont* font = io->Fonts->AddFontFromFileTTF("resources\\Roboto-Regular.ttf", 18.0f);
+        ImFont* font = io->Fonts->AddFontFromFileTTF(Path.Join("resources", "Roboto-Regular.ttf"), 18.0f);
         Debug.Assert(font != null);
 
         //ImFont* font = io->Fonts->AddFontFromFileTTF(@"C:\Windows\Fonts\ArialUni.ttf", 18.0f, null, io->Fonts->GetGlyphRangesJapanese());
