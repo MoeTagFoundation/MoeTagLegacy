@@ -21,7 +21,8 @@ namespace MoeTag.Lang
         EMPTY_PREVIEW_TEXT,
         EMPTY_TAG_TEXT,
 
-        PAGE_LABEL,
+        PAGE_LABEL_FORWARDS,
+        PAGE_LABEL_BACKWARDS,
 
         SECTION_SEARCHSETTINGS,
         SECTION_CONTENTGRID,

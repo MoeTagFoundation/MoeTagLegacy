@@ -41,7 +41,7 @@
                 case LanguageNodeType.SECTION_CONTENTGRID:
                     return "BASD SAD ASD ASD ASD  ASD";
 
-                case LanguageNodeType.PAGE_LABEL:
+                case LanguageNodeType.PAGE_LABEL_FORWARDS:
                     return $"SDA DSA SAD  ASD ASD ASD {args[0]}";
 
                 case LanguageNodeType.LABEL_BYTESREAD:

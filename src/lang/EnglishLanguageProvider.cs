@@ -41,8 +41,10 @@
                 case LanguageNodeType.SECTION_CONTENTGRID:
                     return "Browse Content";
 
-                case LanguageNodeType.PAGE_LABEL:
-                    return $"Page {args[0]}";
+                case LanguageNodeType.PAGE_LABEL_FORWARDS:
+                    return $"Next";
+                case LanguageNodeType.PAGE_LABEL_BACKWARDS:
+                    return $"Previous";
 
                 case LanguageNodeType.LABEL_BYTESREAD:
                     return $"{args[0]} Bytes Read ({args[1]} MB)";

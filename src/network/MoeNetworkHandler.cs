@@ -126,7 +126,7 @@ namespace MoeTag.Network
                 return null;
             }
 
-            HttpResponseMessage resultHttp = null;
+            HttpResponseMessage? resultHttp;
             try
             {
                 resultHttp = await _client.GetAsync(uri);
@@ -143,7 +143,7 @@ namespace MoeTag.Network
                 result = await s.ReadToEndAsync();
             }
 
-            if (result == null || String.IsNullOrWhiteSpace(result))
+            if (result == null || string.IsNullOrWhiteSpace(result))
             {
                 MoeLogger.Log(this, "error: API Returned NULL Result");
                 return null;
@@ -181,7 +181,6 @@ namespace MoeTag.Network
                     tasks.Add(GetApiResult(endpoint, page, tags).ContinueWith(async (resp) => callback(await resp)));
                 }
             }
-
             await Task.WhenAll(tasks);
 
             EndTimer();
@@ -217,80 +216,80 @@ namespace MoeTag.Network
             }
         }
 
-        public async void DownloadContentPreview(MoeContentModel model, long imageUpdateRate)
+        public async Task DownloadContentPreview(MoeContentModel model, long imageUpdateRate)
         {
             MoeLogger.Log(this, "[Attempting Load PREVIEW]: " + model.PreviewUrl);
 
-            using (var b = await _client.GetStreamAsync(model.PreviewUrl))
+            using var b = await _client.GetStreamAsync(model.PreviewUrl);
+            try
             {
-                try
+                model.BytesRead = 0;
+
+                ICollection<byte> bytes = new List<byte>();
+                int bt = b.ReadByte();
+
+                void updatePreview()
                 {
-                    model.BytesRead = 0;
-
-                    ICollection<byte> bytes = new List<byte>();
-                    int bt = b.ReadByte();
-
-                    void updatePreview()
+                    try
                     {
-                        try
-                        {
-                            byte[] byteArray = bytes.ToArray();
-                            Image<Rgba32> a = Image.Load<Rgba32>(byteArray);
-                            model.SetDataPreview(a);
-                        } catch (Exception ex)
-                        {
-                            MoeLogger.Log(this, ex.Message);
-                        }
+                        byte[] byteArray = bytes.ToArray();
+                        Image<Rgba32> a = Image.Load<Rgba32>(byteArray);
+                        model.SetDataPreview(a);
                     }
-
-                    bool video = false;
-                    if (model.PreviewUrl.EndsWith(".mp4") ||
-                        model.PreviewUrl.EndsWith(".webm") ||
-                        model.PreviewUrl.EndsWith(".zip") ||
-                        model.PreviewUrl.EndsWith(".gif"))
+                    catch (Exception ex)
                     {
-                        video = true;
+                        MoeLogger.Log(this, ex.Message);
                     }
+                }
 
-                    Task? updatingPreview = null;
-                    DateTime start = DateTime.Now;
-                    while (bt != -1)
-                    {
-                        bytes.Add((byte)bt);
-                        bt = b.ReadByte();
-                        model.BytesRead += 1;
-                        if (!video)
-                        {
-                            TimeSpan timeItTook = DateTime.Now - start;
-                            if (timeItTook > TimeSpan.FromMilliseconds(imageUpdateRate))
-                            {
-                                if (updatingPreview == null || updatingPreview.IsCompleted)
-                                {
-                                    MoeLogger.Log(this, "Generating new preview");
-                                    updatePreview();
-                                }
-                                else
-                                {
-                                    MoeLogger.Log(this, "Overlap, Can't!");
-                                }
-                                start = DateTime.Now;
-                            }
-                        }
-                    }
+                bool video = false;
+                if (model.PreviewUrl.EndsWith(".mp4") ||
+                    model.PreviewUrl.EndsWith(".webm") ||
+                    model.PreviewUrl.EndsWith(".zip") ||
+                    model.PreviewUrl.EndsWith(".gif"))
+                {
+                    video = true;
+                }
+
+                Task? updatingPreview = null;
+                DateTime start = DateTime.Now;
+                while (bt != -1)
+                {
+                    bytes.Add((byte)bt);
+                    bt = b.ReadByte();
+                    model.BytesRead += 1;
                     if (!video)
                     {
-                        updatePreview();
-                    } else
-                    {
-                        string p = Path.GetTempPath() + Guid.NewGuid().ToString() + Path.GetExtension(model.PreviewUrl);
-                        await File.WriteAllBytesAsync(p, bytes.ToArray());
-                        model.SetDataPreviewVideo(p);
+                        TimeSpan timeItTook = DateTime.Now - start;
+                        if (timeItTook > TimeSpan.FromMilliseconds(imageUpdateRate))
+                        {
+                            if (updatingPreview == null || updatingPreview.IsCompleted)
+                            {
+                                MoeLogger.Log(this, "Generating new preview");
+                                updatePreview();
+                            }
+                            else
+                            {
+                                MoeLogger.Log(this, "Overlap, Can't!");
+                            }
+                            start = DateTime.Now;
+                        }
                     }
                 }
-                catch (Exception ex)
+                if (!video)
                 {
-                    MoeLogger.Log(this, "Task Cancelled for Image PREVIEW (likely due to timeout) " + ex.Message);
+                    updatePreview();
                 }
+                else
+                {
+                    string p = Path.GetTempPath() + Guid.NewGuid().ToString() + Path.GetExtension(model.PreviewUrl);
+                    await File.WriteAllBytesAsync(p, bytes.ToArray());
+                    model.SetDataPreviewVideo(p);
+                }
+            }
+            catch (Exception ex)
+            {
+                MoeLogger.Log(this, "Task Cancelled for Image PREVIEW (likely due to timeout) " + ex.Message);
             }
 
         }

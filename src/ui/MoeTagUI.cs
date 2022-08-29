@@ -101,7 +101,7 @@ namespace MoeTag.UI
             ImGui.Dummy(new Vector2(20, 10));
 
             float width = ImGui.GetContentRegionAvail().X;
-
+            bool search = false;
             unsafe
             {
                 fixed (byte* bufferPtr = MoeUnmanagedHelper.GetRawBuffer("Tags"))
@@ -110,9 +110,13 @@ namespace MoeTag.UI
                     if (ImGui.InputTextWithHint("", _moeLanguageProvider.GetLanguageNode(LanguageNodeType.SEARCH_INPUT_HINT),
                         bufferPtr, 128, ImGuiInputTextFlags.EnterReturnsTrue))
                     {
-                        Search();
+                        search = true;
                     }
                 }
+            }
+            if(search)
+            {
+                Task.Run(async () => await Search());
             }
 
             if (ImGui.IsItemHovered())
@@ -141,7 +145,7 @@ namespace MoeTag.UI
             {
                 ImGui.BeginDisabled();
             }
-            if (ImGui.Button(_moeLanguageProvider.GetLanguageNode(LanguageNodeType.PAGE_LABEL, "<<<"), new Vector2((width / 2.0f) - 50, 30)))
+            if (ImGui.Button(_moeLanguageProvider.GetLanguageNode(LanguageNodeType.PAGE_LABEL_BACKWARDS), new Vector2((width / 2.0f) - 56, 30)))
             {
                 _page -= 1;
                 _page = Math.Max(_page, 0);
@@ -163,7 +167,7 @@ namespace MoeTag.UI
             ImGui.EndDisabled();
 
             ImGui.SameLine();
-            if (ImGui.Button(_moeLanguageProvider.GetLanguageNode(LanguageNodeType.PAGE_LABEL, ">>>"), new Vector2((width / 2.0f) - 50, 30)))
+            if (ImGui.Button(_moeLanguageProvider.GetLanguageNode(LanguageNodeType.PAGE_LABEL_FORWARDS), new Vector2((width / 2.0f) - 56, 30)))
             {
                 _page += 1;
                 Search(resetPage: false);
@@ -471,7 +475,7 @@ namespace MoeTag.UI
 
                 if (ImGui.BeginTabBar("PreviewTabs", flags: ImGuiTabBarFlags.Reorderable))
                 {
-                    if (_moeContentManager.GetModelPreviews().Count > 0)
+                    if (_moeContentManager.GetModelPreviews().Any())
                     {
                         foreach (MoeContentModel previewModel in _moeContentManager.GetModelPreviews())
                         {
@@ -675,7 +679,7 @@ namespace MoeTag.UI
             stream.Write(json);
         }
 
-        private async void Search(bool resetPage = true)
+        private async Task Search(bool resetPage = true)
         {
             // Return if already searching
             if (!_searchStateFinished) { return; }
@@ -699,7 +703,7 @@ namespace MoeTag.UI
                     return;
                 }
 
-                if (networkResponseModel.Nodes.Count > 0)
+                if (networkResponseModel.Nodes.Any())
                 {
                     ICollection<Task> tasks = new List<Task>();
                     foreach (NetworkResponseNode node in networkResponseModel.Nodes)
@@ -811,23 +815,28 @@ namespace MoeTag.UI
                 _moeContentManager.AddPreview(model);
                 _moeContentManager.SetPreview(model);
 
-                Task.Run(() =>
+                Task.Run(async () =>
                 {
-                    _moeNetworkHandler!.DownloadContentPreview(model, _imageUpdateRate);
+                    await _moeNetworkHandler!.DownloadContentPreview(model, _imageUpdateRate);
                 });
             }
         }
 
         private void RenderImageGrid()
         {
-            //ImGui.Columns(_columnWidth, null, false);
             Vector2 tableSize = ImGui.GetContentRegionAvail();
-            _columnCount = Math.Max(1, (int)Math.Ceiling(tableSize.X / _columnSize));
+            if (_columnSize >= 0)
+            {
+                _columnCount = Math.Max(1, (int)Math.Ceiling(tableSize.X / _columnSize));
+            } else
+            {
+                _columnCount = 1;
+            }
+
             if (ImGui.BeginTable("ImageResults", _columnCount, ImGuiTableFlags.ScrollY | ImGuiTableFlags.Borders, tableSize))
             {
                 MoeContentModel[] modelArray = _moeContentManager!.GetModels().ToArray();
-                int total = modelArray.Count();
-
+                int total = modelArray.Length;
                 for (int i = 0; i < total; i++)
                 {
                     // Get texture stream
