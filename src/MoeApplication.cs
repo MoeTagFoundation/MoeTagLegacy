@@ -107,7 +107,7 @@ internal unsafe sealed class MoeApplication : NativeWindow
 
         GlslVersion = glslVersion;
         Context.MakeCurrent();
-        VSync = VSyncMode.Off; // Enable vsync
+        VSync = VSyncMode.On; // Enable vsync
 
         // Setup Dear ImGui context
         ImGui.CHECKVERSION();

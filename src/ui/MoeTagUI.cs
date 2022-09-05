@@ -116,7 +116,7 @@ namespace MoeTag.UI
             }
             if(search)
             {
-                Task.Run(async () => await Search());
+                _ = Search();
             }
 
             if (ImGui.IsItemHovered())
@@ -133,7 +133,7 @@ namespace MoeTag.UI
             if (ImGui.Button(_moeNetworkHandler.GetSearchString(_searchState),
                 new Vector2(width, 30)) && _searchStateFinished)
             {
-                Search();
+                _ = Search();
             }
 
             if (ImGui.IsItemHovered())
@@ -149,7 +149,7 @@ namespace MoeTag.UI
             {
                 _page -= 1;
                 _page = Math.Max(_page, 0);
-                Search(resetPage: false);
+                _ = Search(resetPage: false);
             }
             if (_page <= 0)
             {
@@ -170,7 +170,8 @@ namespace MoeTag.UI
             if (ImGui.Button(_moeLanguageProvider.GetLanguageNode(LanguageNodeType.PAGE_LABEL_FORWARDS), new Vector2((width / 2.0f) - 56, 30)))
             {
                 _page += 1;
-                Search(resetPage: false);
+                _page = Math.Min(_page, Int32.MaxValue);
+                _ = Search(resetPage: false);
             }
             if (ImGui.IsItemHovered())
             {
@@ -198,7 +199,7 @@ namespace MoeTag.UI
                 if (ImGui.Button(tag.Name, new Vector2(0, 0)))
                 {
                     MoeUnmanagedHelper.SetUnmanagedString("Tags", tag.Name);
-                    Search();
+                    _ = Search();
                 }
                 if (ImGui.IsItemHovered())
                 {
@@ -399,7 +400,7 @@ namespace MoeTag.UI
                                 if (ImGui.Button(tag, new Vector2(0, 0)))
                                 {
                                     MoeUnmanagedHelper.SetUnmanagedString("Tags", tag);
-                                    Search();
+                                    _ = Search();
                                 }
                                 if (ImGui.IsItemHovered())
                                 {

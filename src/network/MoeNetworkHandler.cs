@@ -97,7 +97,8 @@ namespace MoeTag.Network
                 case SearchState.FINISHED:
                     if (_searchTime.TotalSeconds != 0.0)
                     {
-                        return "Finished in " + _searchTime.TotalSeconds + "s";
+                        string timeFormat = _searchTime.TotalSeconds.ToString("0.00");
+                        return "Finished in " + timeFormat + "s";
                     } else
                     {
                         return "Press 'search' to search";
