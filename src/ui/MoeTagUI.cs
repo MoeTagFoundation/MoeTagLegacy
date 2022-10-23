@@ -388,36 +388,57 @@ namespace MoeTag.UI
                     ImGui.Begin(_moeLanguageProvider.GetLanguageNode(LanguageNodeType.SECTION_PREVIEWINFO));
                 }
 
+                // Clicked on already loaded
+                if (_moeContentManager == null)
+                {
+                    MoeLogger.Log(this, "error: content manager null, cannot render user interface");
+                    return;
+                }
+
                 if (_moeContentManager.GetCurrentModelPreview() != null)
                 {
                     if (_moeContentManager.GetCurrentModelPreview().Tags != null)
                     {
-
-                        void displayTag(string text, string tag)
+                        // Helper function to display tags
+                        void displayTag(Vector4 color, string text, string tag)
                         {
                             if (!string.IsNullOrWhiteSpace(tag))
                             {
+                                ImGui.PushStyleColor(ImGuiCol.Text, color);
                                 if (ImGui.Button(tag, new Vector2(0, 0)))
                                 {
                                     MoeUnmanagedHelper.SetUnmanagedString("Tags", tag);
                                     _ = Search();
                                 }
+                                ImGui.PopStyleColor();
                                 if (ImGui.IsItemHovered())
                                 {
                                     ImGui.SetTooltip(_moeLanguageProvider.GetLanguageNode(LanguageNodeType.TAG_SEARCH_TOOLTIP, tag));
                                 }
                                 ImGui.SameLine();
-                                ImGui.Text("(" + text + ")");
+                                ImGui.TextColored(new Vector4(0.3f, 0.3f, 0.3f, 1.0f), "(" + text + ")");
                             }
                         }
 
-                        displayTag(_moeLanguageProvider.GetLanguageNode(LanguageNodeType.TAG_ARTIST),
+                        // Assign default tag colors (made for dark themes)
+                        Vector4 ArtistColor = new(0.920f, 0.313f, 0.313f, 1.0f);
+                        Vector4 CharacterColor = new(0.475f, 0.920f, 0.313f, 1.0f);
+                        Vector4 CopyrightColor = new(0.795f, 0.353f, 0.930f, 1.0f);
+                        Vector4 MetaColor = new(0.920f, 0.930f, 0.353f, 1.0f);
+                        Vector4 BasicColor = new(0.502f, 0.559f, 0.930f, 1.0f);
+
+                        // Display artist/character/copyright
+                        displayTag(ArtistColor,
+                            _moeLanguageProvider.GetLanguageNode(LanguageNodeType.TAG_ARTIST),
                             _moeContentManager.GetCurrentModelPreview().Tags_Artist);
-                        displayTag(_moeLanguageProvider.GetLanguageNode(LanguageNodeType.TAG_CHARACTER),
+                        displayTag(CharacterColor,
+                            _moeLanguageProvider.GetLanguageNode(LanguageNodeType.TAG_CHARACTER),
                             _moeContentManager.GetCurrentModelPreview().Tags_Artist);
-                        displayTag(_moeLanguageProvider.GetLanguageNode(LanguageNodeType.TAG_COPYRIGHT),
+                        displayTag(CopyrightColor,
+                            _moeLanguageProvider.GetLanguageNode(LanguageNodeType.TAG_COPYRIGHT),
                             _moeContentManager.GetCurrentModelPreview().Tags_Copyright);
 
+                        // Display meta
                         List<string> metaTags = _moeContentManager.GetCurrentModelPreview().Tags_Meta.Split(" ").ToList();
                         int tagMetaIndex = 0;
                         foreach (string metaTag in metaTags)
@@ -425,10 +446,11 @@ namespace MoeTag.UI
                             if (!string.IsNullOrWhiteSpace(metaTag))
                             {
                                 tagMetaIndex++;
-                                displayTag($"{_moeLanguageProvider.GetLanguageNode(LanguageNodeType.TAG_META)} {tagMetaIndex}", metaTag);
+                                displayTag(MetaColor, $"{_moeLanguageProvider.GetLanguageNode(LanguageNodeType.TAG_META)} {tagMetaIndex}", metaTag);
                             }
                         }
 
+                        // Display basic
                         List<string> tags = _moeContentManager.GetCurrentModelPreview().Tags.Split(" ").ToList();
                         int tagIndex = 0;
                         foreach (string tag in tags)
@@ -436,7 +458,7 @@ namespace MoeTag.UI
                             if (!string.IsNullOrWhiteSpace(tag))
                             {
                                 tagIndex++;
-                                displayTag($"{_moeLanguageProvider.GetLanguageNode(LanguageNodeType.TAG_TAG)} {tagIndex}", tag);
+                                displayTag(BasicColor, $"{_moeLanguageProvider.GetLanguageNode(LanguageNodeType.TAG_TAG)} {tagIndex}", tag);
                             }
                         }
                     }
@@ -474,7 +496,7 @@ namespace MoeTag.UI
 
                 bool _disposingTab = false;
 
-                if (ImGui.BeginTabBar("PreviewTabs", flags: ImGuiTabBarFlags.Reorderable))
+                if (ImGui.BeginTabBar("PreviewTabs", flags: ImGuiTabBarFlags.FittingPolicyResizeDown))
                 {
                     if (_moeContentManager.GetModelPreviews().Any())
                     {
@@ -737,6 +759,10 @@ namespace MoeTag.UI
                     {
                         MoeLogger.Log(this, "Error: HTTP request exception : " + exception.Message);
                         _searchState = SearchState.NO_RESULTS;
+                    } catch(TaskCanceledException exception)
+                    {
+                        MoeLogger.Log(this, "Error: Task cancelled exception : " + exception.Message);
+                        _searchState = SearchState.NO_RESULTS;
                     }
                 }
             });
@@ -854,41 +880,39 @@ namespace MoeTag.UI
                         continue;
                     }
 
-                    if (texture != null)
+                    float size = tableSize.X;
+                    if (_columnCount > 0)
                     {
-                        float size = tableSize.X;
-                        if (_columnCount > 0)
+                        size = tableSize.X / _columnCount;
+                    }
+                    if (DrawTexture(texture, new Vector2(size), true))
+                    {
+                        LoadModel(model);
+                    }
+                    unsafe
+                    {
+                        if(ImGui.IsItemHovered())
                         {
-                            size = tableSize.X / _columnCount;
+                            ImGui.SetTooltip(model.PreviewUrl);
                         }
-                        if (DrawTexture(texture, new Vector2(size), true))
+                        if (ImGui.BeginPopupContextItem())
                         {
-                            LoadModel(model);
-                        }
-                        unsafe
-                        {
-                            if(ImGui.IsItemHovered())
+                            if (ImGui.MenuItem("Open URL in Browser", "o"))
                             {
-                                ImGui.SetTooltip(model.PreviewUrl);
+                                MoeBrowserInterface.OpenUrl(model.PreviewUrl);
                             }
-                            if (ImGui.BeginPopupContextItem())
+                            if (ImGui.MenuItem("Copy URL to Clipboard", "u"))
                             {
-                                if (ImGui.MenuItem("Open URL in Browser", "o"))
-                                {
-                                    MoeBrowserInterface.OpenUrl(model.PreviewUrl);
-                                }
-                                if (ImGui.MenuItem("Copy URL to Clipboard", "u"))
-                                {
-                                    MoeClipboardInterface.SetTextClipboard(model.PreviewUrl);
-                                }
-                                if (ImGui.MenuItem("Open Content in MoeTag", "p"))
-                                {
-                                    LoadModel(model);
-                                }
-                                ImGui.EndPopup();
+                                MoeClipboardInterface.SetTextClipboard(model.PreviewUrl);
                             }
+                            if (ImGui.MenuItem("Open Content in MoeTag", "p"))
+                            {
+                                LoadModel(model);
+                            }
+                            ImGui.EndPopup();
                         }
                     }
+
 
                     ImGui.TableNextColumn();
                 }
